@@ -29,6 +29,14 @@
             <version>3.12.5</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-mongodb -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-mongodb</artifactId>
+            <version>3.0.0.RELEASE</version>
+        </dependency>
+
+
     </dependencies>
 
 </project>

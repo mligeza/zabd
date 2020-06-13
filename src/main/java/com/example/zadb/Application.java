@@ -4,17 +4,13 @@ import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.mongodb.*;
 import com.mongodb.MongoClient;
 import com.mongodb.client.*;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.*;
+
 import static com.mongodb.client.model.Indexes.*;
 
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Sorts;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.json.JSONObject;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Aggregates.*;
@@ -22,7 +18,11 @@ import static com.mongodb.client.model.Sorts.orderBy;
 import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Accumulators.*;
 import static com.mongodb.client.model.Projections.*;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
 
 public class Application {
@@ -35,8 +35,8 @@ public class Application {
 
         MongoDatabase mongoDatabase = mongoClient.getDatabase("db-aggregations");
         MongoCollection<Document> mongoCollection = mongoDatabase.getCollection("movies");
-        FindIterable<Document> findIterable = mongoCollection.find();
-        MongoCursor<Document> cursor = findIterable.iterator();
+        /*FindIterable<Document> findIterable = mongoCollection.find();
+        MongoCursor<Document> cursor = findIterable.iterator();*/
 
         /**
          * ZAD 1
@@ -63,55 +63,62 @@ public class Application {
          * ZAD 2
          * ERROR
          */
+        // Jestem pewien że query leci poprawne, natomiast coś jest nie tak z wynikami
 
-
-        //BRAK WARUNKU -  reżyser (pole director) był również aktorem (pole cast)
-        // ALE WIEM JAK PRZEROBIC - MOŻNA SKLADAC WARUNKI: https://stackoverflow.com/questions/40714393/aggregation-using-mongodb-java-driver
-        Bson project2 = fields(include("directors", "cast","year","imdb.rating","$cast","$directors"), excludeId());
-
-        //Filters.in("directorAsActor","$cast","$directors"
-
-
-        Bson filter2 = and(
-                gt("imdb.rating", 5),
-                gt("year", 1960),
-                gt("countFilm", 0)
-                );
-
+        //$count
         String count2 = "countFilm";
 
-        BsonArray cond = new BsonArray();
+        //$addFields
+        List<BsonElement> cond= new ArrayList<>();
+        BsonDocument e_if= new BsonDocument("$isArray",new BsonString("$directorAsActor"));
+        cond.add(new BsonElement("if",e_if));
+        BsonDocument e_then= new BsonDocument("$size",new BsonString("$directorAsActor"));
+        cond.add(new BsonElement("then",e_then));
+        cond.add(new BsonElement("else",new BsonString("0")));
+        Field countFilm = new Field("countFilm",new BsonDocument("$cond", new BsonDocument(cond)));
 
-        BsonArray if2 = new BsonArray();
-        if2.add(new BsonString("$isArray"));
-        if2.add(new BsonString("$directorAsActor"));
 
-        BsonArray then2 = new BsonArray();
-        then2.add(new BsonString("$size"));
-        then2.add(new BsonString("$directorAsActor"));
 
-        cond.add(new BsonDocument("then", if2));
-        cond.add(new BsonDocument("then", then2));
-        cond.add(new BsonDocument("else", 0));
-/*
+
+        // $match
+        BsonArray and=new BsonArray();
+        and.add(new BsonDocument("imdb.rating",new BsonDocument("$gt",new BsonInt32(5))));
+        and.add(new BsonDocument("year",new BsonDocument("$gt",new BsonInt32(1960))));
+        and.add(new BsonDocument("countFilm",new BsonDocument("$gt",new BsonInt32(0))));
+        Bson filter2=new BsonDocument("$and",and);
+
+
+        //$project
+        List<BsonElement> pr2= new ArrayList<>();
+        pr2.add(new BsonElement("directors",new BsonInt32(1)));
+        pr2.add(new BsonElement("cast",new BsonInt32(1)));
+        pr2.add(new BsonElement("year",new BsonInt32(1)));
+        pr2.add(new BsonElement("imdb.rating",new BsonInt32(1)));
+        BsonArray temp2array=new BsonArray();
+        temp2array.add(new BsonString("$cast"));
+        temp2array.add(new BsonString("$directors"));
+        BsonElement directorAsActor = new BsonElement("directorAsActor",new BsonDocument("$setIntersection",temp2array));
+        pr2.add(directorAsActor);
+        Bson projection = new BsonDocument(pr2);
+
+        //aggregate
         AggregateIterable<Document> zad2 = mongoCollection.aggregate(Arrays.asList(
-                project(project2),
-                addFields("countFilm",{"$cond":}),
-                match(filter2),
-                count(count2)));
+
+                project(projection), //OK
+                addFields(countFilm), //OK
+                match(filter2),//OK
+                count(count2)//OK
+
+        ));
+
 
         showResults(zad2);
-*/
 
 
         /**
          * ZAD 3
          * DONE
          */
-
-
-
-
 /*
         Bson sort3  = orderBy(descending("filmNum"));
 
@@ -142,5 +149,9 @@ public class Application {
             System.out.println(jsonObj.toString(4));
         }
     }
+    private static Consumer<Document> printDocuments() {
+        return doc -> System.out.println(doc.toJson(JsonWriterSettings.builder().indent(true).build()));
+    }
+
 
 }

@@ -167,12 +167,76 @@ public class Application {
 
         showResults(zad4);
 */
+
 /**
  * ZAD 5
- * TODO
+ * DONE
  */
 
+/*
+        MongoCollection<Document> mongoCollectionAirRoutes = mongoDatabase.getCollection("air_routes");
 
+
+
+        //$match
+        Bson filter5= and(
+                eq("airline.name","Lufthansa"),
+                eq("src_airport", "BCN")
+        );
+
+
+        //graphlookupoptions
+        GraphLookupOptions glo5 =new GraphLookupOptions();
+        glo5.depthField("hops");
+        glo5.restrictSearchWithMatch(new BsonDocument("airline.name",new BsonString("Lufthansa")));
+        glo5.maxDepth(2);
+
+        //$add
+        List<BsonElement> f5= new ArrayList<>();
+        f5.add(new BsonElement("input",new BsonString("$przesiadka")));
+        BsonArray eq5=new BsonArray();
+        eq5.add(new BsonString("$$this.hops"));
+        eq5.add(new BsonInt32(2));
+        f5.add(new BsonElement("cond",new BsonDocument("$eq",eq5)));
+        Field przesiadka = new Field("przesiadka",new BsonDocument("$filter",new BsonDocument(f5)));
+
+
+        AggregateIterable<Document> zad5 = mongoCollectionAirRoutes.aggregate(Arrays.asList(
+                match(filter5),
+                graphLookup("air_routes","$src_airport","dst_airport","src_airport","przesiadka",glo5),
+                addFields(przesiadka)
+        ));
+
+        showResults(zad5);
+*/
+
+        /**
+         * ZAD 9
+         *
+         */
+        /*
+        MongoCollection<Document> mongoCollectionAirRoutes = mongoDatabase.getCollection("air_routes");
+
+
+        Bson filter9 = new BsonDocument("src_airport",new BsonString("DUS"));
+
+        List<Facet> facets = new ArrayList<>();
+        List<Bson> f_DUStoWAW_pipeline = new ArrayList<>();
+        f_DUStoWAW_pipeline.add(new BsonDocument("$match", new BsonDocument("dst_airport",new BsonString("WAW"))));
+
+        List<Bson> f_DUStoPOZ_pipeline = new ArrayList<>();
+        f_DUStoPOZ_pipeline.add(new BsonDocument("$match", new BsonDocument("dst_airport",new BsonString("POZ"))));
+
+        Facet f_DUStoWAW = new Facet("DUStoWAW",f_DUStoWAW_pipeline);
+        Facet f_DUStoPOZ = new Facet("DUStoWAW",f_DUStoPOZ_pipeline);
+        facets.add(f_DUStoWAW);
+        facets.add(f_DUStoPOZ);
+
+        AggregateIterable<Document> zad9 = mongoCollectionAirRoutes.aggregate(Arrays.asList(
+                match(filter9),
+                facet(facets)
+        ));
+*/
 
     }
 
@@ -184,7 +248,7 @@ public class Application {
 
             Document document= (Document) object;
             JSONObject jsonObj = new JSONObject(document.toJson());
-            System.out.println(jsonObj.toString(4));
+            System.out.println(jsonObj.toString(2));
         }
     }
 

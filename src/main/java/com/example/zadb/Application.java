@@ -61,10 +61,9 @@ public class Application {
 
         /**
          * ZAD 2
-         * ERROR
+         * DONE
          */
-        // Jestem pewien że query leci poprawne, natomiast coś jest nie tak z wynikami
-
+/*
         //$count
         String count2 = "countFilm";
 
@@ -113,7 +112,7 @@ public class Application {
 
 
         showResults(zad2);
-
+*/
 
         /**
          * ZAD 3
@@ -133,6 +132,45 @@ public class Application {
         showResults(zad3);
 */
 
+        /**
+         * ZAD 4
+         * DONE
+         */
+/*
+        MongoCollection<Document> mongoCollectionAirlines = mongoDatabase.getCollection("air_alliances");
+
+
+
+        //$match
+        List<BsonValue> f4= new ArrayList<>();
+        f4.add(new BsonString("BCN"));
+        Bson filter4 = new BsonDocument("routes.dst_airport", new BsonDocument("$in",new BsonArray(f4)));
+
+        //$group
+        BsonField group4=new BsonField("routes_count",new BsonDocument("$sum",new BsonInt32(1)));
+
+        //$sort
+        Bson sort4= new BsonDocument("routes_count",new BsonInt32(-1));
+
+
+        AggregateIterable<Document> zad4 = mongoCollectionAirlines.aggregate(Arrays.asList(
+                unwind("$airlines"),
+                lookup("air_routes","airlines","airline.name","routes"),
+                unwind("$routes"),
+                match(filter4),
+                group("$name",group4),
+                sort(sort4),
+                limit(1)
+
+
+        ));
+
+        showResults(zad4);
+*/
+/**
+ * ZAD 5
+ * TODO
+ */
 
 
 
@@ -149,9 +187,7 @@ public class Application {
             System.out.println(jsonObj.toString(4));
         }
     }
-    private static Consumer<Document> printDocuments() {
-        return doc -> System.out.println(doc.toJson(JsonWriterSettings.builder().indent(true).build()));
-    }
+
 
 
 }
